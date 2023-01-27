@@ -4,7 +4,6 @@ import com.mongodb.client.MongoClient
 import com.mongodb.client.MongoClients
 import com.mongodb.client.MongoCollection
 import com.mongodb.client.MongoDatabase
-import com.mongodb.client.model.Filters.and
 import com.mongodb.client.model.Filters.eq
 import org.bson.BsonDocument
 import org.junit.jupiter.api.Test
@@ -41,8 +40,14 @@ class MongoConnectionTest {
     fun findFizz(database: MongoDatabase): Sequence<BsonDocument> {
         val collection: MongoCollection<BsonDocument> = database.getCollection(collName, BsonDocument::class.java)
         return collection.find(
-            and(eq("otherdata.nested.fizzbuzz", "91"))
+            eq("otherdata.nested.fizzbuzz", "91")
         ).asSequence()
+    }
+
+    fun findFizzParse(database: MongoDatabase): Sequence<BsonDocument> {
+        val collection: MongoCollection<BsonDocument> = database.getCollection(collName, BsonDocument::class.java)
+        val filter = BsonDocument.parse("""{ "otherdata.nested.fizzbuzz": "91" }""")
+        return collection.find(filter).asSequence()
     }
 
     fun fizzbuzz(i: Int): String =
@@ -86,6 +91,10 @@ class MongoConnectionTest {
 
         println(docs.count())
 //        docs.forEach { println(it) }
+
+        val res = findFizzParse(db)
+        assertTrue { res.count() > 0 }
+        println("res count ${res.count()}")
 
         val ff = findFizz(db)
 

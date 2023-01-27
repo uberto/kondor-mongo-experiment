@@ -25,11 +25,12 @@ interface MongoSession {
 
     fun MongoCollection.removeDocument(id: BsonObjectId) =
         removeDocuments(listOf(id)).first()
+    fun MongoCollection.all(): Sequence<BsonDocument> = find("")
 
     //    fun MongoCollection.replaceDocument(doc: BsonDocument): BsonObjectId
     fun MongoCollection.addDocuments(docs: List<BsonDocument>): Collection<BsonObjectId>
     fun MongoCollection.removeDocuments(ids: List<BsonObjectId>): List<BsonObjectId>
-    fun MongoCollection.find(): Sequence<BsonDocument>
+    fun MongoCollection.find(queryString: String): Sequence<BsonDocument>
     fun MongoCollection.drop()
 }
 
@@ -71,8 +72,10 @@ class MongoDbSession(val database: MongoDatabase) : MongoSession {
         TODO("remove documents")
 //        coll().deleteMany(eq).insertedIds.values as List<BsonObjectId>
 
-    override fun MongoCollection.find(): Sequence<BsonDocument> =
-        coll().find().asSequence()
+    override fun MongoCollection.find(queryString: String): Sequence<BsonDocument> =
+        BsonDocument.parse(queryString).let { filter ->
+            coll().find(filter).asSequence()
+        }
 
     override fun MongoCollection.drop() =
         coll().drop()

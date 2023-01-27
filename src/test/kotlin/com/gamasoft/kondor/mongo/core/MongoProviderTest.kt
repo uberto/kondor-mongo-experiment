@@ -1,9 +1,10 @@
 package com.gamasoft.kondor.mongo.core
 
 import org.bson.BsonDocument
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import java.util.UUID
+import java.util.*
 
 val collForTest = object : MongoCollection {
     override val collectionName: String = "collForTest"
@@ -26,16 +27,31 @@ class MongoProviderTest {
         """.trimIndent()
     )
 
+    fun createDoc(index: Int) = BsonDocument.parse(
+        """{
+            parentId: "$uuid"
+            name: "subdoc${index}"
+            index: $index
+        }""".trimIndent()
+    )
+
     val oneDocReader = runOnMongo {
         collForTest.addDocument(doc)
-        val docs = collForTest.find()
+        val docs = collForTest.all()
         assertEquals(1, docs.count())
         docs.first()
     }
 
     val dropCollReader = runOnMongo {
         collForTest.drop()
-        collForTest.find().count()
+        collForTest.all().count()
+    }
+
+    val docQueryReader = runOnMongo {
+        (1..100).forEach {
+            collForTest.addDocument(createDoc(it))
+        }
+        collForTest.find("{ index: 42 }").first()
     }
 
     private val mongoConnection = MongoConnection("mongodb://localhost:27017")
@@ -44,7 +60,7 @@ class MongoProviderTest {
 
     @Test
     fun `add and query doc safely`() {
-        val provider = MongoProvider(mongoConnection,dbName)
+        val provider = MongoProvider(mongoConnection, dbName)
 
         val myDoc = provider.tryRun(oneDocReader).orThrow()
         assertEquals(doc, myDoc)
@@ -65,7 +81,16 @@ class MongoProviderTest {
         val provider = MongoProvider(MongoConnection("mongodb://localhost:12345"), dbName)
 
         val res = provider.tryRun(dropCollReader)
-        assertTrue( res.toString().contains("MongoErrorException"))
+        assertTrue(res.toString().contains("MongoErrorException"))
+
+    }
+
+    @Test
+    fun `parsing query safely`() {
+        val provider = MongoProvider(mongoConnection, dbName)
+
+        val myDoc = provider.tryRun(docQueryReader).orThrow()
+        assertEquals(42, myDoc["index"]!!.asInt32().value)
 
     }
 }
