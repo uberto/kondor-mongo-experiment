@@ -13,10 +13,10 @@ import kotlin.test.assertTrue
 
 class MongoConnectionTest {
 
-    //start mongo first!
+    //start mongo first! localhost:27017
 
     fun connectToMongo(): MongoDatabase {
-        val mongoClient: MongoClient = MongoClients.create("mongodb://localhost:27017")
+        val mongoClient: MongoClient = MongoClients.create("mongodb:// ")
 
         println(mongoClient.listDatabases())
         return mongoClient.getDatabase("test")

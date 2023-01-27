@@ -8,6 +8,7 @@ import java.util.*
 
 val collForTest = object : MongoCollection {
     override val collectionName: String = "collForTest"
+    //retention... policy.. index
 }
 
 class MongoProviderTest {
@@ -36,6 +37,7 @@ class MongoProviderTest {
     )
 
     val oneDocReader = runOnMongo {
+        collForTest.drop()
         collForTest.addDocument(doc)
         val docs = collForTest.all()
         assertEquals(1, docs.count())
@@ -64,7 +66,6 @@ class MongoProviderTest {
 
         val myDoc = provider.tryRun(oneDocReader).orThrow()
         assertEquals(doc, myDoc)
-
     }
 
     @Test
@@ -73,7 +74,6 @@ class MongoProviderTest {
 
         val tot: Int = provider.tryRun(dropCollReader).orThrow()
         assertEquals(0, tot)
-
     }
 
     @Test
@@ -82,7 +82,6 @@ class MongoProviderTest {
 
         val res = provider.tryRun(dropCollReader)
         assertTrue(res.toString().contains("MongoErrorException"))
-
     }
 
     @Test
@@ -91,6 +90,5 @@ class MongoProviderTest {
 
         val myDoc = provider.tryRun(docQueryReader).orThrow()
         assertEquals(42, myDoc["index"]!!.asInt32().value)
-
     }
 }

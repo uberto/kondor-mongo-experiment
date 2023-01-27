@@ -7,26 +7,28 @@ import com.gamasoft.kondor.mongo.core.runOnMongo
 import com.ubertob.kondor.json.JAny
 import com.ubertob.kondor.json.bool
 import com.ubertob.kondor.json.datetime.str
-import com.ubertob.kondor.json.jsonnode.JsonNodeObject
+import com.ubertob.kondor.json.jsonnode.*
 import com.ubertob.kondor.json.num
 import com.ubertob.kondor.json.str
 import org.bson.BsonDocument
+import org.bson.BsonDocumentWriter
+import org.bson.BsonType
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 
 class JsonConverter4MongoTest {
 
-    data class MyDoc4Mongo(val index: Int, val name: String, val date: LocalDate, val bool: Boolean)
+    data class SimpleFlatDoc(val index: Int, val name: String, val date: LocalDate, val bool: Boolean)
 
-    object JMyDoc4Mongo: JAny<MyDoc4Mongo>() {
+    object JSimpleFlatDoc : JAny<SimpleFlatDoc>() {
 
-        val index by num(MyDoc4Mongo::index)
-        val name by str(MyDoc4Mongo::name)
-        val localDate by str(MyDoc4Mongo::date)
-        val yesOrNo by bool(MyDoc4Mongo::bool)
+        val index by num(SimpleFlatDoc::index)
+        val name by str(SimpleFlatDoc::name)
+        val localDate by str(SimpleFlatDoc::date)
+        val yesOrNo by bool(SimpleFlatDoc::bool)
 
-        override fun JsonNodeObject.deserializeOrThrow() = MyDoc4Mongo(
+        override fun JsonNodeObject.deserializeOrThrow() = SimpleFlatDoc(
             index = +index,
             name = +name,
             date = +localDate,
@@ -34,17 +36,86 @@ class JsonConverter4MongoTest {
         )
     }
 
+    fun <T : Any> toBsonDoc(conv: JAny<T>, value: T): BsonDocument {
+        val jn: JsonNodeObject = conv.toJsonNode(value, NodePathRoot)
+
+        return convertJsonNodeToBson(jn)
+    }
+
+    private fun convertBsonToJsonNode(bsonDocument: BsonDocument): JsonNode {
+    val br = bsonDocument.asBsonReader()
+        val t =br.readBsonType()
+        when(t){
+            BsonType.END_OF_DOCUMENT -> TODO()
+            BsonType.DOUBLE -> TODO()
+            BsonType.STRING -> TODO()
+            BsonType.DOCUMENT -> TODO()
+            BsonType.ARRAY -> TODO()
+            BsonType.BINARY -> TODO()
+            BsonType.UNDEFINED -> TODO()
+            BsonType.OBJECT_ID -> TODO()
+            BsonType.BOOLEAN -> TODO()
+            BsonType.DATE_TIME -> TODO()
+            BsonType.NULL -> TODO()
+            BsonType.REGULAR_EXPRESSION -> TODO()
+            BsonType.DB_POINTER -> TODO()
+            BsonType.JAVASCRIPT -> TODO()
+            BsonType.SYMBOL -> TODO()
+            BsonType.JAVASCRIPT_WITH_SCOPE -> TODO()
+            BsonType.INT32 -> TODO()
+            BsonType.TIMESTAMP -> TODO()
+            BsonType.INT64 -> TODO()
+            BsonType.DECIMAL128 -> TODO()
+            BsonType.MIN_KEY -> TODO()
+            BsonType.MAX_KEY -> TODO()
+        }
+
+        return JsonNodeNull(NodePathRoot)
+    }
+
+    private fun convertJsonNodeToBson(jn: JsonNodeObject): BsonDocument {
+
+        val writer = BsonDocumentWriter(BsonDocument())
+
+        writer.writeStartDocument()
+
+        jn._fieldMap.forEach { (fieldName, node) ->
+            writer.writeName(fieldName)
+            encodeValue(writer, node)
+        }
+
+        writer.writeEndDocument()
+
+        return writer.document
+    }
+
+    fun encodeValue(writer: BsonDocumentWriter, value: JsonNode) {
+        when (value) {
+            is JsonNodeNull -> writer.writeNull()
+            is JsonNodeArray -> {
+                writer.writeStartArray()
+                //TODO elements
+                writer.writeEndArray()
+            }
+
+            is JsonNodeBoolean -> writer.writeBoolean(value.value)
+            is JsonNodeNumber -> writer.writeDouble(value.num.toDouble()) //TODO
+            is JsonNodeObject -> TODO()
+            is JsonNodeString -> writer.writeString(value.text)
+        }
+    }
+
     fun createDoc(index: Int): BsonDocument {
         val obj = buildMyDoc4Mongo(index)
-        val json = JMyDoc4Mongo.toJson(obj)
-        println("!!! $json")
+        val json = JSimpleFlatDoc.toJson(obj)
+//        println("!!! $json")
         val bsonDocument = BsonDocument.parse(json)
-        println(">>> ${bsonDocument.toJson()}")
+//        println(">>> ${bsonDocument.toJson()}")
         return bsonDocument
     }
 
-    private fun buildMyDoc4Mongo(i: Int): MyDoc4Mongo =
-        MyDoc4Mongo(
+    private fun buildMyDoc4Mongo(i: Int): SimpleFlatDoc =
+        SimpleFlatDoc(
             index = i,
             name = "mydoc $i",
             date = LocalDate.now().minusDays(i.toLong()),
