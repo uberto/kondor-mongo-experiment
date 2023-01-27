@@ -59,4 +59,13 @@ class MongoProviderTest {
         assertEquals(0, tot)
 
     }
+
+    @Test
+    fun `return error in case of wrong connection`() {
+        val provider = MongoProvider(MongoConnection("mongodb://localhost:12345"), dbName)
+
+        val res = provider.tryRun(dropCollReader)
+        assertTrue( res.toString().contains("MongoErrorException"))
+
+    }
 }

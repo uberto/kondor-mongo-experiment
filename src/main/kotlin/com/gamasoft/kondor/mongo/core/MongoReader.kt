@@ -22,6 +22,7 @@ interface MongoCollection { //actual collections are objects
 interface MongoSession {
     fun MongoCollection.addDocument(doc: BsonDocument): BsonObjectId =
         addDocuments(listOf(doc)).first()
+
     fun MongoCollection.removeDocument(id: BsonObjectId) =
         removeDocuments(listOf(id)).first()
 
@@ -36,23 +37,28 @@ typealias MongoReader<T> = ContextReader<MongoSession, T>
 
 fun <T> runOnMongo(operation: MongoSession.() -> T) = ContextReader<MongoSession, T>(operation)
 
-class MongoProvider(val connection: MongoConnection, val databaseName: String) : ContextProvider<MongoSession> {
-    override fun <T> tryRun(reader: ContextReader<MongoSession, T>): Outcome<MongoError, T> {
-        val mongoClient: MongoClient = MongoClients.create("mongodb://localhost:27017")
-
+class MongoProvider(private val connection: MongoConnection, val databaseName: String) : ContextProvider<MongoSession> {
+    override fun <T> tryRun(reader: ContextReader<MongoSession, T>): Outcome<MongoError, T> =
         try {
+            val mongoClient: MongoClient = MongoClients.create(connection.connString)
 
-            println(mongoClient.listDatabases()) //todo check for errorss
+            println("Connected to ${connection.connString} found dbs: ${mongoClient.listDatabases()}") //todo remove it later
+            val sess = MongoDbSession(mongoClient.getDatabase(databaseName))
+            reader.runWith(sess).asSuccess()
         } catch (e: Exception) {
-            return MongoError(connection, databaseName, e.toString()).asFailure()
+            MongoErrorException(connection, databaseName, e).asFailure()
         }
-        val sess = MongoDbSession(mongoClient.getDatabase(databaseName))
-        return reader.runWith(sess).asSuccess() //todo check for errors
-    }
+
 }
 
-data class MongoError(val connection: MongoConnection, val databaseName: String, val errorDesc: String) : OutcomeError {
+sealed class MongoError: OutcomeError
+
+data class MongoErrorInternal(val connection: MongoConnection, val databaseName: String, val errorDesc: String) : MongoError() {
     override val msg: String = "$errorDesc - dbname:$databaseName instance:${connection.connString}"
+}
+
+data class MongoErrorException(val connection: MongoConnection, val databaseName: String, val e: Exception) : MongoError() {
+    override val msg: String = "$e - dbname:$databaseName instance:${connection.connString}"
 }
 
 class MongoDbSession(val database: MongoDatabase) : MongoSession {
@@ -61,7 +67,7 @@ class MongoDbSession(val database: MongoDatabase) : MongoSession {
     override fun MongoCollection.addDocuments(docs: List<BsonDocument>): Collection<BsonObjectId> =
         coll().insertMany(docs).insertedIds.values as Collection<BsonObjectId>
 
-    override fun MongoCollection.removeDocuments(ids: List<BsonObjectId>): List<BsonObjectId>  =
+    override fun MongoCollection.removeDocuments(ids: List<BsonObjectId>): List<BsonObjectId> =
         TODO("remove documents")
 //        coll().deleteMany(eq).insertedIds.values as List<BsonObjectId>
 
