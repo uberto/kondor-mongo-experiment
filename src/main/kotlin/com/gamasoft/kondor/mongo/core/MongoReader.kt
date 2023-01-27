@@ -25,6 +25,7 @@ interface MongoSession {
 
     fun MongoCollection.removeDocument(id: BsonObjectId) =
         removeDocuments(listOf(id)).first()
+
     fun MongoCollection.all(): Sequence<BsonDocument> = find("")
 
     //    fun MongoCollection.replaceDocument(doc: BsonDocument): BsonObjectId
@@ -52,13 +53,15 @@ class MongoProvider(private val connection: MongoConnection, val databaseName: S
 
 }
 
-sealed class MongoError: OutcomeError
+sealed class MongoError : OutcomeError
 
-data class MongoErrorInternal(val connection: MongoConnection, val databaseName: String, val errorDesc: String) : MongoError() {
+data class MongoErrorInternal(val connection: MongoConnection, val databaseName: String, val errorDesc: String) :
+    MongoError() {
     override val msg: String = "$errorDesc - dbname:$databaseName instance:${connection.connString}"
 }
 
-data class MongoErrorException(val connection: MongoConnection, val databaseName: String, val e: Exception) : MongoError() {
+data class MongoErrorException(val connection: MongoConnection, val databaseName: String, val e: Exception) :
+    MongoError() {
     override val msg: String = "$e - dbname:$databaseName instance:${connection.connString}"
 }
 
@@ -73,9 +76,13 @@ class MongoDbSession(val database: MongoDatabase) : MongoSession {
 //        coll().deleteMany(eq).insertedIds.values as List<BsonObjectId>
 
     override fun MongoCollection.find(queryString: String): Sequence<BsonDocument> =
-        BsonDocument.parse(queryString).let { filter ->
-            coll().find(filter).asSequence()
-        }
+        when (queryString) {
+            "" -> coll().find()
+            else -> BsonDocument.parse(queryString).let { filter ->
+                coll().find(filter)
+            }
+        }.asSequence()
+
 
     override fun MongoCollection.drop() =
         coll().drop()
