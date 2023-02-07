@@ -1,23 +1,27 @@
 package com.gamasoft.kondor.mongo.json
 
 import com.gamasoft.kondor.mongo.core.MongoConnection
+import com.gamasoft.kondor.mongo.core.MongoDocCollection
 import com.gamasoft.kondor.mongo.core.MongoProvider
-import com.gamasoft.kondor.mongo.core.collForTest
-import com.gamasoft.kondor.mongo.core.runOnMongo
+import com.gamasoft.kondor.mongo.core.mongoOperation
 import com.ubertob.kondor.json.JAny
 import com.ubertob.kondor.json.bool
 import com.ubertob.kondor.json.datetime.str
-import com.ubertob.kondor.json.jsonnode.*
+import com.ubertob.kondor.json.jsonnode.JsonNodeObject
 import com.ubertob.kondor.json.num
 import com.ubertob.kondor.json.str
 import org.bson.BsonDocument
-import org.bson.BsonDocumentWriter
-import org.bson.BsonType
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 
 class JsonConverter4MongoTest {
+
+    private object collForJsonTest: MongoDocCollection() {
+        override val collectionName: String = "collForJsonTest"
+        //retention... policy.. index
+    }
+
 
     data class SimpleFlatDoc(val index: Int, val name: String, val date: LocalDate, val bool: Boolean)
 
@@ -34,75 +38,6 @@ class JsonConverter4MongoTest {
             date = +localDate,
             bool = +yesOrNo
         )
-    }
-
-    fun <T : Any> toBsonDoc(conv: JAny<T>, value: T): BsonDocument {
-        val jn: JsonNodeObject = conv.toJsonNode(value, NodePathRoot)
-
-        return convertJsonNodeToBson(jn)
-    }
-
-    private fun convertBsonToJsonNode(bsonDocument: BsonDocument): JsonNode {
-    val br = bsonDocument.asBsonReader()
-        val t =br.readBsonType()
-        when(t){
-            BsonType.END_OF_DOCUMENT -> TODO()
-            BsonType.DOUBLE -> TODO()
-            BsonType.STRING -> TODO()
-            BsonType.DOCUMENT -> TODO()
-            BsonType.ARRAY -> TODO()
-            BsonType.BINARY -> TODO()
-            BsonType.UNDEFINED -> TODO()
-            BsonType.OBJECT_ID -> TODO()
-            BsonType.BOOLEAN -> TODO()
-            BsonType.DATE_TIME -> TODO()
-            BsonType.NULL -> TODO()
-            BsonType.REGULAR_EXPRESSION -> TODO()
-            BsonType.DB_POINTER -> TODO()
-            BsonType.JAVASCRIPT -> TODO()
-            BsonType.SYMBOL -> TODO()
-            BsonType.JAVASCRIPT_WITH_SCOPE -> TODO()
-            BsonType.INT32 -> TODO()
-            BsonType.TIMESTAMP -> TODO()
-            BsonType.INT64 -> TODO()
-            BsonType.DECIMAL128 -> TODO()
-            BsonType.MIN_KEY -> TODO()
-            BsonType.MAX_KEY -> TODO()
-        }
-
-        return JsonNodeNull(NodePathRoot)
-    }
-
-    private fun convertJsonNodeToBson(jn: JsonNodeObject): BsonDocument {
-
-        val writer = BsonDocumentWriter(BsonDocument())
-
-        writer.writeStartDocument()
-
-        jn._fieldMap.forEach { (fieldName, node) ->
-            writer.writeName(fieldName)
-            encodeValue(writer, node)
-        }
-
-        writer.writeEndDocument()
-
-        return writer.document
-    }
-
-    fun encodeValue(writer: BsonDocumentWriter, value: JsonNode) {
-        when (value) {
-            is JsonNodeNull -> writer.writeNull()
-            is JsonNodeArray -> {
-                writer.writeStartArray()
-                //TODO elements
-                writer.writeEndArray()
-            }
-
-            is JsonNodeBoolean -> writer.writeBoolean(value.value)
-            is JsonNodeNumber -> writer.writeDouble(value.num.toDouble()) //TODO
-            is JsonNodeObject -> TODO()
-            is JsonNodeString -> writer.writeString(value.text)
-        }
     }
 
     fun createDoc(index: Int): BsonDocument {
@@ -124,19 +59,19 @@ class JsonConverter4MongoTest {
 
     private val doc = createDoc(0)
 
-    val oneDocReader = runOnMongo {
-        collForTest.drop()
-        collForTest.addDocument(doc)
-        val docs = collForTest.all()
+    val oneDocReader = mongoOperation {
+        collForJsonTest.drop()
+        collForJsonTest.addDocument(doc)
+        val docs = collForJsonTest.all()
         assertEquals(1, docs.count())
         docs.first()
     }
 
-    val docQueryReader = runOnMongo {
+    val docQueryReader = mongoOperation {
         (1..100).forEach {
-            collForTest.addDocument(createDoc(it))
+            collForJsonTest.addDocument(createDoc(it))
         }
-        collForTest.find("{ index: 42 }").first()
+        collForJsonTest.find("{ index: 42 }").first()
     }
 
     private val mongoConnection = MongoConnection("mongodb://localhost:27017")

@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.util.*
 
-val collForTest = object : MongoCollection {
+private object collForTest: MongoDocCollection() {
     override val collectionName: String = "collForTest"
     //retention... policy.. index
 }
@@ -36,7 +36,7 @@ class MongoProviderTest {
         }""".trimIndent()
     )
 
-    val oneDocReader = runOnMongo {
+    val oneDocReader = mongoOperation {
         collForTest.drop()
         collForTest.addDocument(doc)
         val docs = collForTest.all()
@@ -44,12 +44,12 @@ class MongoProviderTest {
         docs.first()
     }
 
-    val dropCollReader = runOnMongo {
+    val dropCollReader = mongoOperation {
         collForTest.drop()
         collForTest.all().count()
     }
 
-    val docQueryReader = runOnMongo {
+    val docQueryReader = mongoOperation {
         (1..100).forEach {
             collForTest.addDocument(createDoc(it))
         }
@@ -64,7 +64,8 @@ class MongoProviderTest {
     fun `add and query doc safely`() {
         val provider = MongoProvider(mongoConnection, dbName)
 
-        val myDoc = provider.tryRun(oneDocReader).orThrow()
+        val outcome = oneDocReader runOn provider
+        val myDoc = outcome.orThrow()
         assertEquals(doc, myDoc)
     }
 
