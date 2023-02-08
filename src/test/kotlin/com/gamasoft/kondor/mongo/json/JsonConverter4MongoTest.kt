@@ -1,6 +1,6 @@
 package com.gamasoft.kondor.mongo.json
 
-import com.gamasoft.kondor.mongo.core.BsonCollection
+import com.gamasoft.kondor.mongo.core.BsonRepo
 import com.gamasoft.kondor.mongo.core.MongoConnection
 import com.gamasoft.kondor.mongo.core.MongoProvider
 import com.gamasoft.kondor.mongo.core.mongoOperation
@@ -17,7 +17,7 @@ import java.time.LocalDate
 
 class JsonConverter4MongoTest {
 
-    private object collForJsonTest: BsonCollection() {
+    private object collForJsonTest: BsonRepo() {
         override val collectionName: String = "collForJsonTest"
         //retention... policy.. index
     }

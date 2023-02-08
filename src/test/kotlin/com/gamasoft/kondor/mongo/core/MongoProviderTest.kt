@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.util.*
 
-private object collForTest: BsonCollection() {
+private object collForTest: BsonRepo() {
     override val collectionName: String = "collForTest"
     //retention... policy.. index
 }
