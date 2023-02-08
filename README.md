@@ -8,5 +8,5 @@ How to start
 - let access the underlying mongo collection
 - add test about aggregation functions
 - add more capabilities to the collections
-- improve perf of json converters
-- perf tests
+- optimized Kondor-Bson converters
+- performance tests comparing with other solutions

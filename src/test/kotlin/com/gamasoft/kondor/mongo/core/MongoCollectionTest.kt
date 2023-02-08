@@ -28,8 +28,7 @@ class MongoCollectionTest {
             )
     }
 
-    object smallClassCollection : KondorCollection<SmallClass>() {
-        override val converter = JSmallClass
+    object smallClassCollection : KondorCollection<SmallClass>(JSmallClass) {
         override val collectionName: String = "myCollection"
         //retention... policy.. index
     }

@@ -29,8 +29,7 @@ class MongoConnectionTest {
     fun addADoc(database: MongoDatabase, doc: BsonDocument): String {
         val collection: MongoCollection<BsonDocument> = database.getCollection(collName, BsonDocument::class.java)
 
-// insert a document
-        return collection.insertOne(doc).insertedId.asObjectId().value.toHexString()
+        return collection.insertOne(doc).insertedId!!.asObjectId().value.toHexString()
     }
 
 
