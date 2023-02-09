@@ -5,7 +5,9 @@ Explain the logic and the approach here
 How to start
 
 ## ToDo
+- add index to tables (collections)
+- add PK to tables
+- add TTL to tables
 - add test about aggregation functions
-- add more capabilities to the collections
 - optimized Kondor-Bson converters
 - performance tests comparing with other solutions
