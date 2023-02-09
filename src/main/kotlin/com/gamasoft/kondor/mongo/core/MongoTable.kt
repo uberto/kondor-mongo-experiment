@@ -1,6 +1,7 @@
 package com.gamasoft.kondor.mongo.core
 
 import com.ubertob.kondor.json.ObjectNodeConverter
+import com.ubertob.kondor.outcome.onFailure
 import org.bson.BsonDocument
 
 interface MongoTable<T : Any> { //actual collections are objects
@@ -20,6 +21,8 @@ abstract class BsonTable : MongoTable<BsonDocument> {
 }
 
 abstract class TypedTable<T : Any>(private val converter: ObjectNodeConverter<T>) : MongoTable<T> {
-    override fun fromBsonDoc(doc: BsonDocument): T = converter.fromJson(doc.toJson()).orThrow()
+    override fun fromBsonDoc(doc: BsonDocument): T = converter.fromJson(doc.toJson()).onFailure {
+        error("Conversion failed in TypedTable \n--- $it \n--- with JSON ${doc.toJson()}")
+    }
     override fun toBsonDoc(obj: T): BsonDocument = BsonDocument.parse(converter.toJson(obj))
 }

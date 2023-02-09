@@ -1,7 +1,9 @@
 package com.gamasoft.kondor.mongo.core
 
-import org.junit.jupiter.api.Assertions.assertEquals
+import com.ubertob.kondortools.expectSuccess
 import org.junit.jupiter.api.Test
+import strikt.api.expectThat
+import strikt.assertions.isEqualTo
 import java.time.Duration
 
 class MongoTableTest {
@@ -34,11 +36,11 @@ class MongoTableTest {
             simpleDocTable.addDocument(myDoc)
 
             val docs = simpleDocTable.all()
-            assertEquals(1, docs.count())
+            expectThat(1).isEqualTo(docs.count())
             docs.first()
-        }.runOn(provider).orThrow()
+        }.runOn(provider).expectSuccess()
 
-        assertEquals(myDoc, doc)
+        expectThat(myDoc).isEqualTo( doc)
     }
 
     val cleanUp = mongoOperation {
@@ -61,11 +63,11 @@ class MongoTableTest {
 
         val tot = cleanUp.bind {
             write100Doc
-        }.runOn(provider).orThrow()
+        }.runOn(provider).expectSuccess()
 
-        assertEquals(100, tot)
+        expectThat(100L).isEqualTo( tot)
 
-        val allDocs = readAll.runOn(provider).orThrow().toList()
-        assertEquals(myDocs, allDocs)
+        val allDocs = readAll.runOn(provider).expectSuccess().toList()
+        expectThat(myDocs).isEqualTo( allDocs)
     }
 }

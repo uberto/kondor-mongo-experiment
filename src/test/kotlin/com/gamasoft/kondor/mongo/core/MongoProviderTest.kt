@@ -1,9 +1,11 @@
 package com.gamasoft.kondor.mongo.core
 
+import com.ubertob.kondortools.expectSuccess
 import org.bson.BsonDocument
-import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import strikt.api.expectThat
+import strikt.assertions.isEqualTo
 import java.util.*
 
 private object collForTest: BsonTable() {
@@ -40,7 +42,7 @@ class MongoProviderTest {
         collForTest.drop()
         collForTest.addDocument(doc)
         val docs = collForTest.all()
-        assertEquals(1, docs.count())
+        expectThat(1).isEqualTo( docs.count())
         docs.first()
     }
 
@@ -65,16 +67,16 @@ class MongoProviderTest {
         val provider = MongoProvider(mongoConnection, dbName)
 
         val outcome = oneDocReader runOn provider
-        val myDoc = outcome.orThrow()
-        assertEquals(doc, myDoc)
+        val myDoc = outcome.expectSuccess()
+        expectThat(doc).isEqualTo(myDoc)
     }
 
     @Test
     fun `drop collection safely`() {
         val provider = MongoProvider(mongoConnection, dbName)
 
-        val tot: Int = provider.tryRun(dropCollReader).orThrow()
-        assertEquals(0, tot)
+        val tot: Int = provider.tryRun(dropCollReader).expectSuccess()
+        expectThat(0).isEqualTo( tot)
     }
 
     @Test
@@ -89,7 +91,7 @@ class MongoProviderTest {
     fun `parsing query safely`() {
         val provider = MongoProvider(mongoConnection, dbName)
 
-        val myDoc = provider.tryRun(docQueryReader).orThrow()
-        assertEquals(42, myDoc["index"]!!.asInt32().value)
+        val myDoc = provider.tryRun(docQueryReader).expectSuccess()
+        expectThat(42).isEqualTo( myDoc["index"]!!.asInt32().value)
     }
 }

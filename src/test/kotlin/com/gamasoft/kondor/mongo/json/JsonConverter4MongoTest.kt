@@ -10,9 +10,11 @@ import com.ubertob.kondor.json.datetime.str
 import com.ubertob.kondor.json.jsonnode.JsonNodeObject
 import com.ubertob.kondor.json.num
 import com.ubertob.kondor.json.str
+import com.ubertob.kondortools.expectSuccess
 import org.bson.BsonDocument
-import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import strikt.api.expectThat
+import strikt.assertions.isEqualTo
 import java.time.LocalDate
 
 class JsonConverter4MongoTest {
@@ -63,7 +65,7 @@ class JsonConverter4MongoTest {
         collForJsonTest.drop()
         collForJsonTest.addDocument(doc)
         val docs = collForJsonTest.all()
-        assertEquals(1, docs.count())
+        expectThat(1).isEqualTo( docs.count())
         docs.first()
     }
 
@@ -82,8 +84,8 @@ class JsonConverter4MongoTest {
     fun `add and query doc safely`() {
         val provider = MongoProvider(mongoConnection, dbName)
 
-        val myDoc = provider.tryRun(oneDocReader).orThrow()
-        assertEquals(doc, myDoc)
+        val myDoc = provider.tryRun(oneDocReader).expectSuccess()
+        expectThat(doc).isEqualTo( myDoc)
 
     }
 
@@ -92,8 +94,8 @@ class JsonConverter4MongoTest {
     fun `parsing query safely`() {
         val provider = MongoProvider(mongoConnection, dbName)
 
-        val myDoc = provider.tryRun(docQueryReader).orThrow()
-        assertEquals(42, myDoc["index"]!!.asInt32().value)
+        val myDoc = provider.tryRun(docQueryReader).expectSuccess()
+        expectThat(42).isEqualTo( myDoc["index"]!!.asInt32().value)
 
     }
 }

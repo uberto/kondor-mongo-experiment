@@ -7,8 +7,9 @@ import com.mongodb.client.MongoDatabase
 import com.mongodb.client.model.Filters.eq
 import org.bson.BsonDocument
 import org.junit.jupiter.api.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
+import strikt.api.expectThat
+import strikt.assertions.isEqualTo
+import strikt.assertions.isGreaterThan
 
 
 class MongoConnectionTest {
@@ -82,7 +83,7 @@ class MongoConnectionTest {
             )
         }
 
-        assertTrue(db.name == "test")
+        expectThat(db.name).isEqualTo( "test")
         println("connected!")
         val ids = documents.map { addADoc(db, it) }
         println("saved!")
@@ -94,7 +95,7 @@ class MongoConnectionTest {
 //        docs.forEach { println(it) }
 
         val res = findFizzParse(db)
-        assertTrue { res.count() > 0 }
+        expectThat(res.count()).isGreaterThan(0)
         println("res count ${res.count()}")
 
         val ff = findFizz(db)
@@ -110,7 +111,7 @@ class MongoConnectionTest {
         dropCollection(db, collName)
         val docs = allDocs(db)
 
-        assertEquals(0, docs.count())
+        expectThat(docs.count()).isEqualTo(0)
     }
 
     private fun dropCollection(db: MongoDatabase, collName: String) {

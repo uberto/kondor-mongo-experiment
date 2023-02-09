@@ -42,6 +42,7 @@ object KondorBson {
             BsonType.DECIMAL128 -> TODO()
             BsonType.MIN_KEY -> TODO()
             BsonType.MAX_KEY -> TODO()
+            null -> TODO()
         }
 
         return JsonNodeNull(NodePathRoot)

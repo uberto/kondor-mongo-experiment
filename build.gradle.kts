@@ -1,30 +1,40 @@
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-
 plugins {
-    kotlin("jvm") version "1.7.21"
+    kotlin("jvm") version "1.8.0"
     application
 }
 
 group = "org.example"
-version = "1.0-SNAPSHOT"
+version = "0.99"
 
 repositories {
     mavenCentral()
 }
 
+val junitVersion = "5.9.1"
+val junitLauncherVersion = "1.9.1"
+val striktVersion = "0.34.0"
+
 dependencies {
-    implementation("org.mongodb:mongodb-driver-sync:4.8.2")
+    api("org.mongodb:mongodb-driver-sync:4.8.2")
     api ("com.ubertob.kondor:kondor-core:1.8.0")
 
-    testImplementation(kotlin("test"))
+    implementation( "org.junit.jupiter:junit-jupiter-api:$junitVersion")
+
+    testImplementation( "io.strikt:strikt-core:$striktVersion")
+
+    testRuntimeOnly ("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
+    testRuntimeOnly ("org.junit.platform:junit-platform-launcher:$junitLauncherVersion")
+
+
+    testImplementation("com.ubertob.kondor:kondor-tools:1.8.0")
 }
 
 tasks.test {
     useJUnitPlatform()
 }
 
-tasks.withType<KotlinCompile> {
-    kotlinOptions.jvmTarget = "11"
+kotlin {
+    jvmToolchain(11)
 }
 
 application {
