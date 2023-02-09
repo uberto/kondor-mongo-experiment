@@ -40,7 +40,7 @@ class MongoTableTest {
             docs.first()
         }.runOn(provider).expectSuccess()
 
-        expectThat(myDoc).isEqualTo( doc)
+        expectThat(myDoc).isEqualTo(doc)
     }
 
     val cleanUp = mongoOperation {
@@ -49,14 +49,13 @@ class MongoTableTest {
 
     val myDocs = (1..100).map { buildSealedClass(it) }
     val write100Doc = mongoOperation {
-        myDocs.forEach {
-            complexDocTable.addDocument(it)
-        }
+        complexDocTable.addDocuments(myDocs)
         complexDocTable.countDocuments()
     }
     val readAll = mongoOperation {
         complexDocTable.all()
     }
+
 
     @Test
     fun `add and retrieve many random docs`() {
@@ -65,9 +64,38 @@ class MongoTableTest {
             write100Doc
         }.runOn(provider).expectSuccess()
 
-        expectThat(100L).isEqualTo( tot)
+        expectThat(100L).isEqualTo(tot)
 
-        val allDocs = readAll.runOn(provider).expectSuccess().toList()
-        expectThat(myDocs).isEqualTo( allDocs)
+        val allDocs = readAll.runOn(provider).expectSuccess()
+
+        expectThat(allDocs.toList()).isEqualTo(myDocs)
     }
+
+    fun delete3Docs(id: Int) = mongoOperation {
+        complexDocTable.removeDocuments("""{ string: "SmallClass$id" }""")
+            .expectedOne()
+        complexDocTable.removeDocuments("""{ "small_class.string" : "Nested${id + 1}" }""")
+            .expectedOne()
+        complexDocTable.removeDocuments("""{ "name" : "ClassWithArray${id + 2}" }""")
+            .expectedOne()
+    }
+
+    private fun Long.expectedOne() =
+        let { expectThat(it).isEqualTo(1) }
+
+
+    @Test
+    fun `add and delete`() {
+
+        val tot = cleanUp
+            .bind { write100Doc }
+            .bind { delete3Docs(42) }
+            .bind { readAll }
+            .transform { it.count() }
+            .runOn(provider).expectSuccess()
+
+        expectThat(97).isEqualTo(tot)
+    }
+
+
 }

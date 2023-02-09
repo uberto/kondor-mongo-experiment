@@ -10,7 +10,6 @@ data class ContextReader<CTX, out T>(val runWith: (CTX) -> T) {
     fun <U> bind(f: (T) -> ContextReader<CTX, U>): ContextReader<CTX, U> =
         ContextReader { ctx -> f(runWith(ctx)).runWith(ctx) }
 
-
 }
 
 typealias KArrow<A,B, CTX> = (A) -> ContextReader<CTX, B>
