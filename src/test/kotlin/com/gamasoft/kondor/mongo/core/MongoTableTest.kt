@@ -4,14 +4,14 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.time.Duration
 
-class MongoRepoTest {
+class MongoTableTest {
 
-    object simpleDocRepo : KondorRepo<SmallClass>(JSmallClass) {
+    object simpleDocTable : TypedTable<SmallClass>(JSmallClass) {
         override val collectionName: String = "simpleDocs"
         //retention... policy.. index
     }
 
-    object complexDocRepo : KondorRepo<SealedClass>(JSealedClass) {
+    object complexDocTable : TypedTable<SealedClass>(JSealedClass) {
         override val collectionName: String = "complexDocs"
         //retention... policy.. index
     }
@@ -30,10 +30,10 @@ class MongoRepoTest {
         val myDoc = SmallClass("abc", 123, 3.14, true)
 
         val doc = mongoOperation {
-            simpleDocRepo.drop()
-            simpleDocRepo.addDocument(myDoc)
+            simpleDocTable.drop()
+            simpleDocTable.addDocument(myDoc)
 
-            val docs = simpleDocRepo.all()
+            val docs = simpleDocTable.all()
             assertEquals(1, docs.count())
             docs.first()
         }.runOn(provider).orThrow()
@@ -42,18 +42,18 @@ class MongoRepoTest {
     }
 
     val cleanUp = mongoOperation {
-        complexDocRepo.drop()
+        complexDocTable.drop()
     }
 
     val myDocs = (1..100).map { buildSealedClass(it) }
     val write100Doc = mongoOperation {
         myDocs.forEach {
-            complexDocRepo.addDocument(it)
+            complexDocTable.addDocument(it)
         }
-        complexDocRepo.countDocuments()
+        complexDocTable.countDocuments()
     }
     val readAll = mongoOperation {
-        complexDocRepo.all()
+        complexDocTable.all()
     }
 
     @Test
