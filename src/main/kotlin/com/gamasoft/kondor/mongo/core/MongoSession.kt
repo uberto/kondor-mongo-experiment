@@ -4,6 +4,7 @@ import com.mongodb.client.MongoCollection
 import com.mongodb.client.MongoDatabase
 import org.bson.BsonDocument
 import org.bson.BsonObjectId
+import org.bson.conversions.Bson
 import java.util.concurrent.atomic.AtomicReference
 
 interface MongoSession {
@@ -21,6 +22,7 @@ interface MongoSession {
 
     //Query Methods
     fun <T : Any> MongoTable<T>.find(queryString: String): Sequence<T>
+    fun <T : Any> MongoTable<T>.aggregate(vararg pipeline: Bson): Sequence<BsonDocument>
 
     fun MongoTable<*>.countDocuments(): Long
 
@@ -36,17 +38,17 @@ class MongoDbSession(val database: MongoDatabase) : MongoSession {
 
     val collectionCache = AtomicReference<Map<String, MongoCollection<BsonDocument>>>(emptyMap())
 
-   private fun withCollection(mongoTable: MongoTable<*>): MongoCollection<BsonDocument> =
-       collectionCache.get().getOrElse(mongoTable.collectionName) {
-           database.getCollection(
-               mongoTable.collectionName, BsonDocument::class.java
-           ).also { mongoTable.onConnection(it) }
-       }
-
+    private fun withCollection(mongoTable: MongoTable<*>): MongoCollection<BsonDocument> =
+        collectionCache.get().getOrElse(mongoTable.collectionName) {
+            database.getCollection(
+                mongoTable.collectionName, BsonDocument::class.java
+            ).also { mongoTable.onConnection(it) }
+        }
 
 
     fun <T : Any> MongoTable<*>.internalRun(block: (MongoCollection<BsonDocument>) -> T): T =
-        block(withCollection(this)
+        block(
+            withCollection(this)
 
         )
 
@@ -59,7 +61,7 @@ class MongoDbSession(val database: MongoDatabase) : MongoSession {
 
     override fun <T : Any> MongoTable<T>.removeDocuments(queryString: String): Long =
         internalRun {
-            it.deleteMany( BsonDocument.parse(queryString))
+            it.deleteMany(BsonDocument.parse(queryString))
                 .deletedCount
         }
 
@@ -72,10 +74,17 @@ class MongoDbSession(val database: MongoDatabase) : MongoSession {
             }.asSequence().map { this.fromBsonDoc(it) }
         }
 
+    override fun <T : Any> MongoTable<T>.aggregate(vararg pipeline: Bson): Sequence<BsonDocument> =
+        internalRun {
+            it.aggregate(pipeline.toList())
+        }.asSequence()
+
+
     override fun MongoTable<*>.countDocuments(): Long =
         internalRun {
             it.countDocuments()
         }
+
     override fun <T : Any> MongoTable<T>.drop() =
         internalRun {
             it.drop()

@@ -23,10 +23,13 @@ abstract class BsonTable : MongoTable<BsonDocument> {
 }
 
 abstract class TypedTable<T : Any>(private val converter: ObjectNodeConverter<T>) : MongoTable<T> {
-    override fun fromBsonDoc(doc: BsonDocument): T = converter.fromJson(doc.toJson()).onFailure {
-        error("Conversion failed in TypedTable \n--- $it \n--- with JSON ${doc.toJson()}")
-    }
+    override fun fromBsonDoc(doc: BsonDocument): T = converter.fromJson(doc.toJson())
+        .onFailure {
+            error("Conversion failed in TypedTable \n--- $it \n--- with JSON ${doc.toJson()}")
+        }
+
     override fun toBsonDoc(obj: T): BsonDocument = BsonDocument.parse(converter.toJson(obj))
 
     override val onConnection: (MongoCollection<BsonDocument>) -> Unit = {}
+
 }

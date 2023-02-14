@@ -1,8 +1,7 @@
 package com.gamasoft.kondor.mongo.core
 
 import com.mongodb.client.MongoCollection
-import com.mongodb.client.model.IndexOptions
-import com.mongodb.client.model.Indexes
+import com.mongodb.client.model.*
 import com.ubertob.kondortools.expectSuccess
 import org.bson.BsonDocument
 import org.junit.jupiter.api.Test
@@ -112,11 +111,9 @@ class MongoTableTest {
     @Test
     fun `verify Indexes`() {
 
-        val indexes = cleanUp.bind {
-            mongoOperation {
-                expectThat(complexDocTable.listIndexes().count()).isEqualTo(0)
-                simpleDocTable.listIndexes()
-            }
+        val indexes = cleanUp.bindOperation {
+            expectThat(complexDocTable.listIndexes().count()).isEqualTo(0)
+            simpleDocTable.listIndexes()
         }.runOn(provider).expectSuccess()
 
         val definitions = indexes.toList().map { it.toJson() }
@@ -125,5 +122,21 @@ class MongoTableTest {
         expectThat(definitions[1]).contains("MyIndex")
     }
 
+    @Test
+    fun `query and aggregate results`() {
+
+        val aggr = cleanUp.bind {
+            write100Doc
+        }.bindOperation {
+            complexDocTable.aggregate(
+                Aggregates.match(Filters.exists("name")),
+                Aggregates.group("name", Accumulators.sum("count", 1))
+            )
+        }.runOn(provider).expectSuccess()
+
+        val count = aggr.single()["count"]!!.asInt32().value
+        expectThat(count).isEqualTo(33)
+
+    }
 
 }
