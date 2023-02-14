@@ -4,6 +4,7 @@ import com.mongodb.client.MongoCollection
 import com.mongodb.client.MongoDatabase
 import org.bson.BsonDocument
 import org.bson.BsonObjectId
+import java.util.concurrent.atomic.AtomicReference
 
 interface MongoSession {
 
@@ -25,15 +26,28 @@ interface MongoSession {
 
     //Other Methods
     fun <T : Any> MongoTable<T>.drop()
+
+    fun <T : Any> MongoTable<T>.listIndexes(): Sequence<BsonDocument>
+
 }
 
 
 class MongoDbSession(val database: MongoDatabase) : MongoSession {
+
+    val collectionCache = AtomicReference<Map<String, MongoCollection<BsonDocument>>>(emptyMap())
+
+   private fun withCollection(mongoTable: MongoTable<*>): MongoCollection<BsonDocument> =
+       collectionCache.get().getOrElse(mongoTable.collectionName) {
+           database.getCollection(
+               mongoTable.collectionName, BsonDocument::class.java
+           ).also { mongoTable.onConnection(it) }
+       }
+
+
+
     fun <T : Any> MongoTable<*>.internalRun(block: (MongoCollection<BsonDocument>) -> T): T =
-        block(
-            database.getCollection(
-                collectionName, BsonDocument::class.java
-            )
+        block(withCollection(this)
+
         )
 
     override fun <T : Any> MongoTable<T>.addDocuments(docs: List<T>): Collection<BsonObjectId> =
@@ -67,5 +81,8 @@ class MongoDbSession(val database: MongoDatabase) : MongoSession {
             it.drop()
         }
 
-
+    override fun <T : Any> MongoTable<T>.listIndexes(): Sequence<BsonDocument> =
+        internalRun {
+            it.listIndexes().map { it.toBsonDocument() }.iterator().asSequence()
+        }
 }

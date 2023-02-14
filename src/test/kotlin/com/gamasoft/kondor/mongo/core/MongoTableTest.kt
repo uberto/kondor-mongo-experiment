@@ -1,8 +1,13 @@
 package com.gamasoft.kondor.mongo.core
 
+import com.mongodb.client.MongoCollection
+import com.mongodb.client.model.IndexOptions
+import com.mongodb.client.model.Indexes
 import com.ubertob.kondortools.expectSuccess
+import org.bson.BsonDocument
 import org.junit.jupiter.api.Test
 import strikt.api.expectThat
+import strikt.assertions.contains
 import strikt.assertions.isEqualTo
 import java.time.Duration
 
@@ -11,11 +16,17 @@ class MongoTableTest {
     object simpleDocTable : TypedTable<SmallClass>(JSmallClass) {
         override val collectionName: String = "simpleDocs"
         //retention... policy.. index
+
+        override val onConnection: (MongoCollection<BsonDocument>) -> Unit = { coll ->
+            coll.createIndex(
+                Indexes.ascending("int", "string"),
+                IndexOptions().background(true).name("MyIndex")
+            )
+        }
     }
 
     object complexDocTable : TypedTable<SealedClass>(JSealedClass) {
         override val collectionName: String = "complexDocs"
-        //retention... policy.. index
     }
 
     private val provider = MongoProvider(
@@ -44,6 +55,7 @@ class MongoTableTest {
     }
 
     val cleanUp = mongoOperation {
+        simpleDocTable.drop()
         complexDocTable.drop()
     }
 
@@ -95,6 +107,22 @@ class MongoTableTest {
             .runOn(provider).expectSuccess()
 
         expectThat(97).isEqualTo(tot)
+    }
+
+    @Test
+    fun `verify Indexes`() {
+
+        val indexes = cleanUp.bind {
+            mongoOperation {
+                expectThat(complexDocTable.listIndexes().count()).isEqualTo(0)
+                simpleDocTable.listIndexes()
+            }
+        }.runOn(provider).expectSuccess()
+
+        val definitions = indexes.toList().map { it.toJson() }
+        println(definitions)
+        expectThat(definitions.count()).isEqualTo(2)
+        expectThat(definitions[1]).contains("MyIndex")
     }
 
 
