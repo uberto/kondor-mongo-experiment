@@ -41,7 +41,7 @@ class MongoTableTest {
 
         val myDoc = SmallClass("abc", 123, 3.14, true)
 
-        val doc = mongoOperation {
+        val doc = mongoAction {
             simpleDocTable.drop()
             simpleDocTable.addDocument(myDoc)
 
@@ -53,17 +53,17 @@ class MongoTableTest {
         expectThat(myDoc).isEqualTo(doc)
     }
 
-    val cleanUp = mongoOperation {
+    val cleanUp = mongoAction {
         simpleDocTable.drop()
         complexDocTable.drop()
     }
 
     val myDocs = (1..100).map { buildSealedClass(it) }
-    val write100Doc = mongoOperation {
+    val write100Doc = mongoAction {
         complexDocTable.addDocuments(myDocs)
         complexDocTable.countDocuments()
     }
-    val readAll = mongoOperation {
+    val readAll = mongoAction {
         complexDocTable.all()
     }
 
@@ -82,7 +82,7 @@ class MongoTableTest {
         expectThat(allDocs.toList()).isEqualTo(myDocs)
     }
 
-    fun delete3Docs(id: Int) = mongoOperation {
+    fun delete3Docs(id: Int) = mongoAction {
         complexDocTable.removeDocuments("""{ string: "SmallClass$id" }""")
             .expectedOne()
         complexDocTable.removeDocuments("""{ "small_class.string" : "Nested${id + 1}" }""")
@@ -111,7 +111,7 @@ class MongoTableTest {
     @Test
     fun `verify Indexes`() {
 
-        val indexes = cleanUp.bindOperation {
+        val indexes = cleanUp.bindCalculation {
             expectThat(complexDocTable.listIndexes().count()).isEqualTo(0)
             simpleDocTable.listIndexes()
         }.runOn(provider).expectSuccess()
@@ -127,7 +127,7 @@ class MongoTableTest {
 
         val aggr = cleanUp.bind {
             write100Doc
-        }.bindOperation {
+        }.bindCalculation {
             complexDocTable.aggregate(
                 Aggregates.match(Filters.exists("name")),
                 Aggregates.group("name", Accumulators.sum("count", 1))

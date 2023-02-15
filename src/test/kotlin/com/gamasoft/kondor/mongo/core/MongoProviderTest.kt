@@ -38,7 +38,7 @@ class MongoProviderTest {
         }""".trimIndent()
     )
 
-    val oneDocReader = mongoOperation {
+    val oneDocReader = mongoAction {
         collForTest.drop()
         collForTest.addDocument(doc)
         val docs = collForTest.all()
@@ -46,12 +46,12 @@ class MongoProviderTest {
         docs.first()
     }
 
-    val dropCollReader = mongoOperation {
+    val dropCollReader = mongoAction {
         collForTest.drop()
         collForTest.all().count()
     }
 
-    val docQueryReader = mongoOperation {
+    val docQueryReader = mongoAction {
         (1..100).forEach {
             collForTest.addDocument(createDoc(it))
         }

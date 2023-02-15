@@ -3,7 +3,7 @@ package com.gamasoft.kondor.mongo.json
 import com.gamasoft.kondor.mongo.core.BsonTable
 import com.gamasoft.kondor.mongo.core.MongoConnection
 import com.gamasoft.kondor.mongo.core.MongoProvider
-import com.gamasoft.kondor.mongo.core.mongoOperation
+import com.gamasoft.kondor.mongo.core.mongoAction
 import com.ubertob.kondor.json.JAny
 import com.ubertob.kondor.json.bool
 import com.ubertob.kondor.json.datetime.str
@@ -61,7 +61,7 @@ class JsonConverter4MongoTest {
 
     private val doc = createDoc(0)
 
-    val oneDocReader = mongoOperation {
+    val oneDocReader = mongoAction {
         collForJsonTest.drop()
         collForJsonTest.addDocument(doc)
         val docs = collForJsonTest.all()
@@ -69,7 +69,7 @@ class JsonConverter4MongoTest {
         docs.first()
     }
 
-    val docQueryReader = mongoOperation {
+    val docQueryReader = mongoAction {
         (1..100).forEach {
             collForJsonTest.addDocument(createDoc(it))
         }
