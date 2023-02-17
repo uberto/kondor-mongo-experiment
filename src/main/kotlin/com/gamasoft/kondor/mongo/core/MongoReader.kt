@@ -10,7 +10,7 @@ fun <U, T> mongoCalculation(operation: MongoSession.(U) -> T): (U) -> ContextRea
     { input: U -> MongoReader { session -> operation(session, input) } }
 
 fun <T> mongoAction(operation: MongoSession.() -> T): ContextReader<MongoSession, T> =
-    mongoAction(operation)
+    mongoCalculation<Unit, T>{ operation(this) }(Unit)
 
 fun <T, U> MongoReader<T>.bindCalculation(operation: MongoSession.(T) -> U): ContextReader<MongoSession, U> =
     bind { input -> mongoCalculation(operation)(input) }
