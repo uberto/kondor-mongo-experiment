@@ -7,6 +7,8 @@ data class ContextReader<CTX, out T>(val runWith: (CTX) -> T) {
 
     fun <U> transform(f: (T) -> U): ContextReader<CTX, U> = ContextReader { ctx -> f(runWith(ctx)) }
 
+    fun withSuccess(f: (T) -> Unit): ContextReader<CTX, Unit> = transform(f)
+
     fun <U> bind(f: (T) -> ContextReader<CTX, U>): ContextReader<CTX, U> =
         ContextReader { ctx -> f(runWith(ctx)).runWith(ctx) }
 

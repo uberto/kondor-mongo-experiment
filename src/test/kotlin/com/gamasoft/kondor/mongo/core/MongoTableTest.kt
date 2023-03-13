@@ -28,7 +28,7 @@ class MongoTableTest {
         override val collectionName: String = "complexDocs"
     }
 
-    private val provider = MongoProvider(
+    private val localMongo = MongoProvider(
         MongoConnection(
             connString = "mongodb://localhost:27017",
             timeout = Duration.ofMillis(10)
@@ -48,7 +48,7 @@ class MongoTableTest {
             val docs = simpleDocTable.all()
             expectThat(1).isEqualTo(docs.count())
             docs.first()
-        }.runOn(provider).expectSuccess()
+        }.runOn(localMongo).expectSuccess()
 
         expectThat(myDoc).isEqualTo(doc)
     }
@@ -62,7 +62,8 @@ class MongoTableTest {
     val write100Doc = mongoAction {
         complexDocTable.addDocuments(myDocs)
         complexDocTable.countDocuments()
-    }
+    }.withSuccess { expectThat(it).isEqualTo(100) }
+
     val readAll = mongoAction {
         complexDocTable.all()
     }
@@ -71,13 +72,11 @@ class MongoTableTest {
     @Test
     fun `add and retrieve many random docs`() {
 
-        val tot = cleanUp.bind {
-            write100Doc
-        }.runOn(provider).expectSuccess()
+        val res = cleanUp + write100Doc runOn localMongo
 
-        expectThat(100L).isEqualTo(tot)
+        res.expectSuccess()
 
-        val allDocs = readAll.runOn(provider).expectSuccess()
+        val allDocs = readAll.runOn(localMongo).expectSuccess()
 
         expectThat(allDocs.toList()).isEqualTo(myDocs)
     }
@@ -89,6 +88,7 @@ class MongoTableTest {
             .expectedOne()
         complexDocTable.removeDocuments("""{ "name" : "ClassWithArray${id + 2}" }""")
             .expectedOne()
+        Unit
     }
 
     private fun Long.expectedOne() =
@@ -103,7 +103,18 @@ class MongoTableTest {
             .bind { delete3Docs(42) }
             .bind { readAll }
             .transform { it.count() }
-            .runOn(provider).expectSuccess()
+            .runOn(localMongo).expectSuccess()
+
+        expectThat(97).isEqualTo(tot)
+    }
+
+    @Test
+    fun `add and delete alternate syntax`() {
+
+        val res = cleanUp + write100Doc + delete3Docs(42) + readAll
+
+        val tot = res.transform { it.count() }
+            .runOn(localMongo).expectSuccess()
 
         expectThat(97).isEqualTo(tot)
     }
@@ -114,7 +125,7 @@ class MongoTableTest {
         val indexes = cleanUp.bindCalculation {
             expectThat(complexDocTable.listIndexes().count()).isEqualTo(0)
             simpleDocTable.listIndexes()
-        }.runOn(provider).expectSuccess()
+        }.runOn(localMongo).expectSuccess()
 
         val definitions = indexes.toList().map { it.toJson() }
         println(definitions)
@@ -132,7 +143,7 @@ class MongoTableTest {
                 Aggregates.match(Filters.exists("name")),
                 Aggregates.group("name", Accumulators.sum("count", 1))
             )
-        }.runOn(provider).expectSuccess()
+        }.runOn(localMongo).expectSuccess()
 
         val count = aggr.single()["count"]!!.asInt32().value
         expectThat(count).isEqualTo(33)
