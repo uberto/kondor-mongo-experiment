@@ -1,9 +1,9 @@
 package com.gamasoft.kondor.mongo.json
 
 import com.gamasoft.kondor.mongo.core.MongoConnection
-import com.gamasoft.kondor.mongo.core.MongoProvider
+import com.gamasoft.kondor.mongo.core.MongoExecutor
 import com.gamasoft.kondor.mongo.core.TypedTable
-import com.gamasoft.kondor.mongo.core.mongoAction
+import com.gamasoft.kondor.mongo.core.mongoOperation
 import com.ubertob.kondortools.expectSuccess
 import org.junit.jupiter.api.Test
 import strikt.api.expectThat
@@ -29,7 +29,7 @@ class FlatDocTableTest {
 
     private val doc = createDoc(0)
 
-    val oneDocReader = mongoAction {
+    val oneDocReader = mongoOperation {
         FlatDocs.drop()
         FlatDocs.addDocument(doc)
         val docs = FlatDocs.all()
@@ -37,7 +37,7 @@ class FlatDocTableTest {
         docs.first()
     }
 
-    val docQueryReader = mongoAction {
+    val docQueryReader = mongoOperation {
         (1..100).forEach {
             FlatDocs.addDocument(createDoc(it))
         }
@@ -54,7 +54,7 @@ class FlatDocTableTest {
 
     @Test
     fun `add and query doc safely`() {
-        val provider = MongoProvider(mongoConnection, dbName)
+        val provider = MongoExecutor(mongoConnection, dbName)
 
         val myDoc = provider(oneDocReader).expectSuccess()
         expectThat(doc).isEqualTo( myDoc)
@@ -64,7 +64,7 @@ class FlatDocTableTest {
 
     @Test
     fun `parsing query safely`() {
-        val provider = MongoProvider(mongoConnection, dbName)
+        val provider = MongoExecutor(mongoConnection, dbName)
 
         val myDoc = provider(docQueryReader).expectSuccess()
         expectThat(42).isEqualTo( myDoc.index)

@@ -13,7 +13,7 @@ private object collForTest: BsonTable() {
     //retention... policy.. index
 }
 
-class MongoProviderTest {
+class MongoExecutorTest {
 
     val uuid = UUID.randomUUID()
     val doc = BsonDocument.parse(
@@ -38,7 +38,7 @@ class MongoProviderTest {
         }""".trimIndent()
     )
 
-    val oneDocReader = mongoAction {
+    val oneDocReader = mongoOperation {
         collForTest.drop()
         collForTest.addDocument(doc)
         val docs = collForTest.all()
@@ -46,12 +46,12 @@ class MongoProviderTest {
         docs.first()
     }
 
-    val dropCollReader = mongoAction {
+    val dropCollReader = mongoOperation {
         collForTest.drop()
         collForTest.all().count()
     }
 
-    val docQueryReader = mongoAction {
+    val docQueryReader = mongoOperation {
         (1..100).forEach {
             collForTest.addDocument(createDoc(it))
         }
@@ -64,16 +64,16 @@ class MongoProviderTest {
 
     @Test
     fun `add and query doc safely`() {
-        val provider = MongoProvider(mongoConnection, dbName)
+        val provider = MongoExecutor(mongoConnection, dbName)
 
-        val outcome = oneDocReader runOn provider
+        val outcome = oneDocReader exec provider
         val myDoc = outcome.expectSuccess()
         expectThat(doc).isEqualTo(myDoc)
     }
 
     @Test
     fun `drop collection safely`() {
-        val provider = MongoProvider(mongoConnection, dbName)
+        val provider = MongoExecutor(mongoConnection, dbName)
 
         val tot: Int = provider(dropCollReader).expectSuccess()
         expectThat(0).isEqualTo( tot)
@@ -81,7 +81,7 @@ class MongoProviderTest {
 
     @Test
     fun `return error in case of wrong connection`() {
-        val provider = MongoProvider(MongoConnection("mongodb://localhost:12345"), dbName)
+        val provider = MongoExecutor(MongoConnection("mongodb://localhost:12345"), dbName)
 
         val res = provider(dropCollReader)
         assertTrue(res.toString().contains("MongoErrorException"))
@@ -89,7 +89,7 @@ class MongoProviderTest {
 
     @Test
     fun `parsing query safely`() {
-        val provider = MongoProvider(mongoConnection, dbName)
+        val provider = MongoExecutor(mongoConnection, dbName)
 
         val myDoc = provider(docQueryReader).expectSuccess()
         expectThat(42).isEqualTo( myDoc["index"]!!.asInt32().value)

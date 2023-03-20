@@ -28,7 +28,7 @@ class MongoTableTest {
         override val collectionName: String = "complexDocs"
     }
 
-    private val localMongo = MongoProvider(
+    private val localMongo = MongoExecutor(
         MongoConnection(
             connString = "mongodb://localhost:27017",
             timeout = Duration.ofMillis(10)
@@ -41,30 +41,30 @@ class MongoTableTest {
 
         val myDoc = SmallClass("abc", 123, 3.14, true)
 
-        val doc = mongoAction {
+        val doc = mongoOperation {
             simpleDocTable.drop()
             simpleDocTable.addDocument(myDoc)
 
             val docs = simpleDocTable.all()
             expectThat(1).isEqualTo(docs.count())
             docs.first()
-        }.runOn(localMongo).expectSuccess()
+        }.exec(localMongo).expectSuccess()
 
         expectThat(myDoc).isEqualTo(doc)
     }
 
-    val cleanUp = mongoAction {
+    val cleanUp = mongoOperation {
         simpleDocTable.drop()
         complexDocTable.drop()
     }
 
     val myDocs = (1..100).map { buildSealedClass(it) }
-    val write100Doc = mongoAction {
+    val write100Doc = mongoOperation {
         complexDocTable.addDocuments(myDocs)
         complexDocTable.countDocuments()
     }.withAction { expectThat(it).isEqualTo(100) }
 
-    val readAll = mongoAction {
+    val readAll = mongoOperation {
         complexDocTable.all()
     }
 
@@ -72,16 +72,16 @@ class MongoTableTest {
     @Test
     fun `add and retrieve many random docs`() {
 
-        val res = cleanUp + write100Doc runOn localMongo
+        val res = cleanUp + write100Doc exec localMongo
 
         res.expectSuccess()
 
-        val allDocs = readAll.runOn(localMongo).expectSuccess()
+        val allDocs = readAll.exec(localMongo).expectSuccess()
 
         expectThat(allDocs.toList()).isEqualTo(myDocs)
     }
 
-    fun delete3Docs(id: Int) = mongoAction {
+    fun delete3Docs(id: Int) = mongoOperation {
         complexDocTable.removeDocuments("""{ string: "SmallClass$id" }""")
             .expectedOne()
         complexDocTable.removeDocuments("""{ "small_class.string" : "Nested${id + 1}" }""")
@@ -103,7 +103,7 @@ class MongoTableTest {
             .bind { delete3Docs(42) }
             .bind { readAll }
             .transform { it.count() }
-            .runOn(localMongo).expectSuccess()
+            .exec(localMongo).expectSuccess()
 
         expectThat(97).isEqualTo(tot)
     }
@@ -114,7 +114,7 @@ class MongoTableTest {
         val res = cleanUp + write100Doc + delete3Docs(42) + readAll
 
         val tot = res.transform { it.count() }
-            .runOn(localMongo).expectSuccess()
+            .exec(localMongo).expectSuccess()
 
         expectThat(97).isEqualTo(tot)
     }
@@ -125,7 +125,7 @@ class MongoTableTest {
         val indexes = cleanUp.bindCalculation {
             expectThat(complexDocTable.listIndexes().count()).isEqualTo(0)
             simpleDocTable.listIndexes()
-        }.runOn(localMongo).expectSuccess()
+        }.exec(localMongo).expectSuccess()
 
         val definitions = indexes.toList().map { it.toJson() }
         println(definitions)
@@ -143,7 +143,7 @@ class MongoTableTest {
                 Aggregates.match(Filters.exists("name")),
                 Aggregates.group("name", Accumulators.sum("count", 1))
             )
-        }.runOn(localMongo).expectSuccess()
+        }.exec(localMongo).expectSuccess()
 
         val count = aggr.single()["count"]!!.asInt32().value
         expectThat(count).isEqualTo(33)
