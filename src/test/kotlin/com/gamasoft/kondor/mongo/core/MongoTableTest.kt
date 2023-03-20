@@ -62,7 +62,7 @@ class MongoTableTest {
     val write100Doc = mongoAction {
         complexDocTable.addDocuments(myDocs)
         complexDocTable.countDocuments()
-    }.withSuccess { expectThat(it).isEqualTo(100) }
+    }.withAction { expectThat(it).isEqualTo(100) }
 
     val readAll = mongoAction {
         complexDocTable.all()

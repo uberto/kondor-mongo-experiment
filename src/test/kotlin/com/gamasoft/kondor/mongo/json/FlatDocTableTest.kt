@@ -56,7 +56,7 @@ class FlatDocTableTest {
     fun `add and query doc safely`() {
         val provider = MongoProvider(mongoConnection, dbName)
 
-        val myDoc = provider.tryRun(oneDocReader).expectSuccess()
+        val myDoc = provider(oneDocReader).expectSuccess()
         expectThat(doc).isEqualTo( myDoc)
 
     }
@@ -66,7 +66,7 @@ class FlatDocTableTest {
     fun `parsing query safely`() {
         val provider = MongoProvider(mongoConnection, dbName)
 
-        val myDoc = provider.tryRun(docQueryReader).expectSuccess()
+        val myDoc = provider(docQueryReader).expectSuccess()
         expectThat(42).isEqualTo( myDoc.index)
 
     }

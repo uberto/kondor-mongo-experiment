@@ -15,11 +15,11 @@ class MongoProvider(private val connection: MongoConnection, val databaseName: S
 
     private val mongoClient: MongoClient by lazy { MongoClients.create(connection.toMongoClientSettings()) }
 
-    override fun <T> tryRun(reader: ContextReader<MongoSession, T>): Outcome<MongoError, T> =
+    override operator fun <T> invoke(context: ContextReader<MongoSession, T>): Outcome<MongoError, T> =
         try {
             val sess = MongoDbSession(mongoClient.getDatabase(databaseName))
 //            println("Connected to ${connection.connString} found dbs: ${mongoClient.listDatabases()}") //todo remove it later
-            reader.runWith(sess).asSuccess()
+            context.runWith(sess).asSuccess()
         } catch (e: Exception) {
             MongoErrorException(connection, databaseName, e).asFailure()
         }

@@ -75,7 +75,7 @@ class MongoProviderTest {
     fun `drop collection safely`() {
         val provider = MongoProvider(mongoConnection, dbName)
 
-        val tot: Int = provider.tryRun(dropCollReader).expectSuccess()
+        val tot: Int = provider(dropCollReader).expectSuccess()
         expectThat(0).isEqualTo( tot)
     }
 
@@ -83,7 +83,7 @@ class MongoProviderTest {
     fun `return error in case of wrong connection`() {
         val provider = MongoProvider(MongoConnection("mongodb://localhost:12345"), dbName)
 
-        val res = provider.tryRun(dropCollReader)
+        val res = provider(dropCollReader)
         assertTrue(res.toString().contains("MongoErrorException"))
     }
 
@@ -91,7 +91,7 @@ class MongoProviderTest {
     fun `parsing query safely`() {
         val provider = MongoProvider(mongoConnection, dbName)
 
-        val myDoc = provider.tryRun(docQueryReader).expectSuccess()
+        val myDoc = provider(docQueryReader).expectSuccess()
         expectThat(42).isEqualTo( myDoc["index"]!!.asInt32().value)
     }
 }
