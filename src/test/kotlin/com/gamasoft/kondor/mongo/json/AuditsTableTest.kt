@@ -1,6 +1,5 @@
 package com.gamasoft.kondor.mongo.json
 
-import com.gamasoft.kondor.mongo.core.MongoConnection
 import com.gamasoft.kondor.mongo.core.TypedTable
 import com.gamasoft.kondor.mongo.core.mongoOperation
 import strikt.api.expectThat
@@ -35,9 +34,6 @@ class AuditsTableTest {
     }
 
 
-    private val mongoConnection = MongoConnection("mongodb://localhost:27017")
-
-    private val dbName = "MongoProvJsonConvTest"
 
 //    @Test
 //    fun `add and query doc safely`() {

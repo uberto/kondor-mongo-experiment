@@ -1,6 +1,7 @@
 package com.gamasoft.kondor.mongo.json
 
-import com.gamasoft.kondor.mongo.core.MongoConnection
+import com.gamasoft.kondor.mongo.core.MongoConnectionTest.Companion.dbName
+import com.gamasoft.kondor.mongo.core.MongoConnectionTest.Companion.mongoConnection
 import com.gamasoft.kondor.mongo.core.MongoExecutor
 import com.gamasoft.kondor.mongo.core.TypedTable
 import com.gamasoft.kondor.mongo.core.mongoOperation
@@ -44,13 +45,6 @@ class FlatDocTableTest {
         FlatDocs.find("{ index: 42 }").first()
     }
 
-
-
-
-
-    private val mongoConnection = MongoConnection("mongodb://localhost:27017")
-
-    private val dbName = "MongoProvJsonConvTest"
 
     @Test
     fun `add and query doc safely`() {

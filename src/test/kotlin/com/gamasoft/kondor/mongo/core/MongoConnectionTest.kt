@@ -14,15 +14,22 @@ import strikt.assertions.isGreaterThan
 
 class MongoConnectionTest {
 
+    companion object{
+
+        val mongoConnection = MongoConnection("mongodb://localhost:27017")
+
+        val dbName = "MongoKondorTest"
+    }
+
     //Remember to start mongo first! localhost:27017
 
     private fun connectToMongo(): MongoDatabase {
-        val mongoClient: MongoClient = MongoClients.create("mongodb:// ")
+        val mongoClient: MongoClient = MongoClients.create(mongoConnection.connString)
 
         val dbs = mongoClient.listDatabases().map { it.keys }
 
         println("dbs!! $dbs")
-        return mongoClient.getDatabase("test")
+        return mongoClient.getDatabase(dbName)
     }
 
     private val collName = "mycoll"
