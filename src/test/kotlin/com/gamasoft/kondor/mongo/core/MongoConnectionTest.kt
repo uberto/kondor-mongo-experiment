@@ -90,7 +90,7 @@ class MongoConnectionTest {
             )
         }
 
-        expectThat(db.name).isEqualTo( "test")
+        expectThat(db.name).isEqualTo( dbName)
         println("connected!")
         val ids = documents.map { addADoc(db, it) }
         println("saved!")
