@@ -1,7 +1,9 @@
 package com.gamasoft.kondor.mongo.core
 
+import com.gamasoft.kondor.mongo.json.toBsonDocument
 import com.mongodb.client.MongoCollection
 import com.ubertob.kondor.json.ObjectNodeConverter
+import com.ubertob.kondor.json.jsonnode.NodePathRoot
 import com.ubertob.kondor.outcome.onFailure
 import org.bson.BsonDocument
 
@@ -28,8 +30,8 @@ abstract class TypedTable<T : Any>(private val converter: ObjectNodeConverter<T>
             error("Conversion failed in TypedTable \n--- $it \n--- with JSON ${doc.toJson()}")
         }
 
-    override fun toBsonDoc(obj: T): BsonDocument = BsonDocument.parse(converter.toJson(obj))
-//        converter.toJsonNode(obj, NodePathRoot).toBsonDocument()
+    override fun toBsonDoc(obj: T): BsonDocument = //BsonDocument.parse(converter.toJson(obj))
+        converter.toJsonNode(obj, NodePathRoot).toBsonDocument()
 
     override val onConnection: (MongoCollection<BsonDocument>) -> Unit = {}
 
