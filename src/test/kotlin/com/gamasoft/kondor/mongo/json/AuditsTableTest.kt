@@ -63,9 +63,10 @@ class AuditsTableTest {
         docs.first()
     }
 
-    val docQueryReadAll = mongoOperation {
-        (1..100).forEach {
-            AuditsTable.addDocument(randomAudit())
+    val audits = (1..100).map { randomAudit() }
+    val docWriteAndReadAll = mongoOperation {
+        audits.forEach {
+            AuditsTable.addDocument(it)
         }
         AuditsTable.all()
     }
@@ -87,9 +88,11 @@ class AuditsTableTest {
 
     @Test
     fun `parsing query safely`() {
-        val myDocs = executor(cleanUp + docQueryReadAll).expectSuccess().toList()
+
+        val myDocs = executor(cleanUp + docWriteAndReadAll).expectSuccess().toList()
 
         expectThat(myDocs).hasSize(100)
+        expectThat(myDocs).isEqualTo (audits)
 
 //        println(myDocs)
     }
