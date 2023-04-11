@@ -29,7 +29,9 @@ abstract class TypedTable<T : Any>(private val converter: ObjectNodeConverter<T>
         }
 
     override fun toBsonDoc(obj: T): BsonDocument = BsonDocument.parse(converter.toJson(obj))
+//        converter.toJsonNode(obj, NodePathRoot).toBsonDocument()
 
     override val onConnection: (MongoCollection<BsonDocument>) -> Unit = {}
 
 }
+

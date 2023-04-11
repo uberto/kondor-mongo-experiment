@@ -97,3 +97,54 @@ object JMultiAudit : JAny<MultiAudit>() {
         )
 }
 
+
+
+sealed class AuditEvent {
+    data class TextEvent(val message: String) : AuditEvent()
+    data class ErrorCodeEvent(val errorCode: Int, val desc: String) : AuditEvent()
+    data class MultiEvent(val events: List<AuditEvent>) : AuditEvent()
+}
+
+
+//GPT generated
+object JAuditEvent : JSealed<AuditEvent>() {
+    override val discriminatorFieldName = "type"
+    override val subConverters = mapOf(
+        "text" to JTextEvent,
+        "errorCode" to JErrorCodeEvent,
+        "multi" to JMultiEvent
+    )
+
+    override fun extractTypeName(obj: AuditEvent): String = when (obj) {
+        is AuditEvent.TextEvent -> "text"
+        is AuditEvent.ErrorCodeEvent -> "errorCode"
+        is AuditEvent.MultiEvent -> "multi"
+    }
+}
+
+object JTextEvent : JAny<AuditEvent.TextEvent>() {
+    private val message by str(AuditEvent.TextEvent::message)
+
+    override fun JsonNodeObject.deserializeOrThrow() = AuditEvent.TextEvent(
+        message = +message
+    )
+}
+
+object JErrorCodeEvent : JAny<AuditEvent.ErrorCodeEvent>() {
+    private val errorCode by num(AuditEvent.ErrorCodeEvent::errorCode)
+    private val desc by str(AuditEvent.ErrorCodeEvent::desc)
+
+    override fun JsonNodeObject.deserializeOrThrow() = AuditEvent.ErrorCodeEvent(
+        errorCode = +errorCode,
+        desc = +desc
+    )
+}
+
+object JMultiEvent : JAny<AuditEvent.MultiEvent>() {
+    private val events by array(JAuditEvent, AuditEvent.MultiEvent::events)
+
+    override fun JsonNodeObject.deserializeOrThrow() = AuditEvent.MultiEvent(
+        events = +events
+    )
+}
+

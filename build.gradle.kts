@@ -27,6 +27,7 @@ dependencies {
 
 
     testImplementation("com.ubertob.kondor:kondor-tools:1.8.0")
+    testImplementation ("org.jetbrains.kotlin:kotlin-reflect:1.8.0")
 }
 
 tasks.test {

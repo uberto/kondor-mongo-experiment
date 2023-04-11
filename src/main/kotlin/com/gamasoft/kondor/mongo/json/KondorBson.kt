@@ -48,7 +48,7 @@ object KondorBson {
         return JsonNodeNull(NodePathRoot)
     }
 
-    private fun convertJsonNodeToBson(jn: JsonNodeObject): BsonDocument {
+     fun convertJsonNodeToBson(jn: JsonNodeObject): BsonDocument {
 
         val writer = BsonDocumentWriter(BsonDocument())
 
@@ -74,10 +74,18 @@ object KondorBson {
             }
 
             is JsonNodeBoolean -> writer.writeBoolean(value.value)
-            is JsonNodeNumber -> writer.writeDouble(value.num.toDouble()) //TODO
-            is JsonNodeObject -> TODO()
+            is JsonNodeNumber -> writer.writeDouble(value.num.toDouble())
+            is JsonNodeObject -> {
+                writer.writeStartDocument()
+                //todo fields
+                writer.writeEndDocument()
+            }
             is JsonNodeString -> writer.writeString(value.text)
         }
     }
 
 }
+
+
+fun JsonNodeObject.toBsonDocument(): BsonDocument = KondorBson.convertJsonNodeToBson(this) // encodeValue(this)
+

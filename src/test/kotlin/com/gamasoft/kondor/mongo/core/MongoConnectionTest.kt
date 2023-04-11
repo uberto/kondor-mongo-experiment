@@ -72,8 +72,7 @@ class MongoConnectionTest {
         val db = connectToMongo()
 
         val documents = (1..100).map {
-            BsonDocument.parse(
-                """
+            BsonDocument.parse("""
             {
             prog: $it, 
             name: "document $it"
